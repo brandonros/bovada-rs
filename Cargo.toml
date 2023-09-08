@@ -1,0 +1,12 @@
+[package]
+name = "bovada-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+futures-util = { version = "0.3", features = ["sink"] }
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.105"
+tokio = { version = "1.32.0", features = ["rt"] }
+uuid = { version = "1.4.1", features = ["v4"] }
+websocket-lite = { path = "./rust-websocket-lite/websocket-lite", features = ["ssl-native-tls"] }
