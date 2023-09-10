@@ -18,6 +18,7 @@ pub enum EventType {
     MarketsEvent,
     OutcomesEvent,
     DisplayGroupsEvent,
+    NewLinkEvent,
 }
 
 impl EventType {
@@ -30,6 +31,7 @@ impl EventType {
         try_parse_event!(event, MarketsEvent);
         try_parse_event!(event, OutcomesEvent);
         try_parse_event!(event, DisplayGroupsEvent);
+        try_parse_event!(event, NewLinkEvent);
 
         panic!("unable to determine event type {}", event)
     }

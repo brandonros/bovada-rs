@@ -35,6 +35,7 @@ pub struct Market {
     pub notes: String,
     pub period: Period,
     pub outcomes: Vec<Outcome>,
+    pub sortType: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -168,6 +169,19 @@ pub struct DisplayGroupsEvent {
     pub lastModified: i64,
     pub competitors: Vec<Competitor>,
     pub displayGroups: Vec<DisplayGroup>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NewLinkEvent {
+    pub id: String,
+    pub link: String,
+    pub status: Status,
+    pub startTime: i64,
+    pub live: bool,
+    pub denySameGame: String,
+    pub teaserAllowed: bool,
+    pub notes: String
 }
 
 #[derive(Deserialize)]
