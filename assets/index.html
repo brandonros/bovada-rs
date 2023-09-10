@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+    <head>
+        <style>
+            body {
+                display: grid;
+                grid-template-columns: 1fr 1fr; /* This will create 2 equal-width columns */
+                gap: 16px; /* Spacing between the columns */
+                width: 100%;
+                margin: 0 auto; /* Center the container on the page */
+                height: 100vh; /* Full viewport height */
+                align-items: center; /* Vertical alignment */
+            }
+
+            div {
+                padding: 16px;
+                display: flex; /* Using Flexbox for the div */
+                flex-direction: column; /* Stack content vertically */
+                justify-content: center; /* Center content vertically */
+                align-items: center; /* Center content horizontally */
+                height: 100%; /* Take full height available */
+            }
+
+            img {
+                max-width: 100%; /* Ensure images don't overflow the div */
+                height: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <div>1422096928 (Daniil Medvedev)<br><img src="../generated/1422096928.png"></div>
+        <div>1422096929 (Novak Djokovic)<br><img src="../generated/1422096929.png"></div>
+
+        <script type="text/javascript">
+            setTimeout(() => {
+                window.location.reload()
+            }, 5000)
+        </script>
+    </body>
+</html>
