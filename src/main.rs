@@ -3,8 +3,8 @@ mod structs;
 use std::pin::Pin;
 
 use futures_util::{SinkExt, StreamExt};
-use websocket_lite::{Message, Opcode};
 use structs::*;
+use websocket_lite::{Message, Opcode};
 
 #[derive(Debug)]
 enum EventType {
@@ -37,11 +37,13 @@ fn determine_event_type(event: &str) -> EventType {
         return EventType::DisplayGroupsEvent;
     } else {
         panic!("unable to determine event type {event}");
-    } 
+    }
 }
 
 fn main() -> anyhow::Result<()> {
-    let runtime = tokio::runtime::Builder::new_current_thread().enable_io().build()?;
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_io()
+        .build()?;
     runtime.block_on(bovada_subscription())?;
     Ok(())
 }
@@ -49,10 +51,16 @@ fn main() -> anyhow::Result<()> {
 async fn bovada_subscription() -> anyhow::Result<()> {
     // Connect
     let subscription_id = uuid::Uuid::new_v4().to_string().to_ascii_uppercase();
-    let url = format!("wss://services.bovada.lv/services/sports/subscription/{}", subscription_id);
+    let url = format!(
+        "wss://services.bovada.lv/services/sports/subscription/{}",
+        subscription_id
+    );
     let ws_client = websocket_lite::ClientBuilder::new(&url)?;
-    let ws = ws_client.async_connect().await.map_err(|err| anyhow::anyhow!(err))?;
-    
+    let ws = ws_client
+        .async_connect()
+        .await
+        .map_err(|err| anyhow::anyhow!(err))?;
+
     // Split the WebSocket
     let (ws_sink, ws_stream) = ws.split::<Message>();
     let mut ws_sink = Box::pin(ws_sink);
@@ -63,25 +71,45 @@ async fn bovada_subscription() -> anyhow::Result<()> {
 
     // Print header
     println!("timestamp\tevent_type\tevent");
-    
+
     // Receive and process messages
-    handle_messages( &mut ws_stream).await
+    handle_messages(&mut ws_stream).await
 }
 
-async fn subscribe_to_event(ws_sink: &mut Pin<Box<impl futures_util::sink::Sink<Message, Error = websocket_lite::Error>>>) -> anyhow::Result<()> {
+async fn subscribe_to_event(
+    ws_sink: &mut Pin<Box<impl futures_util::sink::Sink<Message, Error = websocket_lite::Error>>>,
+) -> anyhow::Result<()> {
     let args = std::env::args().collect::<Vec<String>>();
     let timestamp = current_millis()?;
-    let event_id = &args.get(1).ok_or(anyhow::anyhow!("Event ID argument missing"))?;
-    ws_sink.send(Message::text(format!("SUBSCRIBE|A|/events/{}.{}?delta=true", event_id, timestamp))).await.map_err(|err| anyhow::anyhow!(err))
+    let event_id = &args
+        .get(1)
+        .ok_or(anyhow::anyhow!("Event ID argument missing"))?;
+    ws_sink
+        .send(Message::text(format!(
+            "SUBSCRIBE|A|/events/{}.{}?delta=true",
+            event_id, timestamp
+        )))
+        .await
+        .map_err(|err| anyhow::anyhow!(err))
 }
 
-async fn handle_messages(ws_stream: &mut Pin<Box<impl futures_util::stream::Stream<Item = Result<Message, websocket_lite::Error>>>>) -> anyhow::Result<()> {
+async fn handle_messages(
+    ws_stream: &mut Pin<
+        Box<impl futures_util::stream::Stream<Item = Result<Message, websocket_lite::Error>>>,
+    >,
+) -> anyhow::Result<()> {
     loop {
-        let msg = ws_stream.next().await.ok_or(anyhow::anyhow!("Stream ended prematurely"))?.map_err(|err| anyhow::anyhow!(err))?;
+        let msg = ws_stream
+            .next()
+            .await
+            .ok_or(anyhow::anyhow!("Stream ended prematurely"))?
+            .map_err(|err| anyhow::anyhow!(err))?;
         match msg.opcode() {
             Opcode::Text => {
                 let timestamp = current_seconds()?;
-                let msg_data = msg.as_text().ok_or(anyhow::anyhow!("Failed to get message data as text"))?;
+                let msg_data = msg
+                    .as_text()
+                    .ok_or(anyhow::anyhow!("Failed to get message data as text"))?;
                 let events = msg_data.split('|').collect::<Vec<_>>();
                 for event in events {
                     let event_type = determine_event_type(event);
@@ -93,15 +121,19 @@ async fn handle_messages(ws_stream: &mut Pin<Box<impl futures_util::stream::Stre
             Opcode::Pong => unimplemented!(),
             Opcode::Close => {
                 return Err(anyhow::anyhow!("Received close opcode"));
-            },
+            }
         }
     }
 }
 
 fn current_millis() -> Result<u128, std::time::SystemTimeError> {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis())
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
 }
 
 fn current_seconds() -> Result<u64, std::time::SystemTimeError> {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs())
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
 }

@@ -6,7 +6,7 @@ use serde::Deserialize;
 pub enum Status {
     O,
     D,
-    S
+    S,
 }
 
 #[derive(Deserialize)]
@@ -19,7 +19,7 @@ pub struct Price {
     pub fractional: String,
     pub malay: String,
     pub indonesian: String,
-    pub hongkong: String
+    pub hongkong: String,
 }
 
 #[derive(Deserialize)]
@@ -80,14 +80,14 @@ pub struct DisplayGroup {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EmptyEvent {
-    pub id: usize
+    pub id: usize,
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct NumMarketsEvent {
     pub id: String,
-    pub numMarkets: usize
+    pub numMarkets: usize,
 }
 
 #[derive(Deserialize)]
@@ -145,7 +145,7 @@ pub struct OutcomesEvent {
     pub singleOnly: bool,
     pub notes: String,
     pub period: Period,
-    pub outcomes: Vec<Outcome>
+    pub outcomes: Vec<Outcome>,
 }
 
 #[derive(Deserialize)]
