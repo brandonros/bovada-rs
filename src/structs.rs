@@ -169,3 +169,29 @@ pub struct DisplayGroupsEvent {
     pub competitors: Vec<Competitor>,
     pub displayGroups: Vec<DisplayGroup>,
 }
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Path {
+    pub id: String,
+    pub link: String,
+    pub description: String,
+    pub r#type: String,
+    pub sportCode: String,
+    pub order: i64,
+    pub leaf: bool,
+    pub current: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Event {
+    pub id: String
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SportsEventCoupon {
+    pub path: Vec<Path>,
+    pub events: Vec<DisplayGroupsEvent>
+}
