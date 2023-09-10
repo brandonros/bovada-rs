@@ -9,6 +9,7 @@ use websocket_lite::{Message, Opcode};
 #[serde(deny_unknown_fields)]
 struct Price {
     id: String,
+    handicap: Option<String>,
     american: String,
     decimal: String,
     fractional: String,
@@ -16,20 +17,6 @@ struct Price {
     indonesian: String,
     hongkong: String
 }
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct HandicapPrice {
-    id: String,
-    handicap: String,
-    american: String,
-    decimal: String,
-    fractional: String,
-    malay: String,
-    indonesian: String,
-    hongkong: String
-}
-
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -44,21 +31,6 @@ struct Market {
     notes: String,
     period: Period,
     outcomes: Vec<Outcome>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct HandicapMarket {
-    id: String,
-    descriptionKey: String,
-    description: String,
-    key: String,
-    marketTypeId: String,
-    status: String,
-    singleOnly: bool,
-    notes: String,
-    period: Period,
-    outcomes: Vec<HandicapOutcome>,
 }
 
 #[derive(Deserialize)]
@@ -78,19 +50,27 @@ struct Outcome {
     description: String,
     status: String,
     r#type: String,
-    competitorId: String,
+    competitorId: Option<String>,
     price: Price,
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct HandicapOutcome {
+struct Competitor {
+    id: String,
+    name: String,
+    home: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DisplayGroup {
     id: String,
     description: String,
-    status: String,
-    r#type: String,
-    competitorId: String,
-    price: HandicapPrice,
+    defaultType: bool,
+    alternateType: bool,
+    markets: Vec<Market>,
+    order: i64,
 }
 
 #[derive(Deserialize)]
@@ -167,13 +147,6 @@ struct Event9 {
 #[serde(deny_unknown_fields)]
 struct Event10 {
     id: String,
-    price: HandicapPrice
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Event11 {
-    id: String,
     description: String,
     defaultType: bool,
     alternateType: bool,
@@ -183,7 +156,7 @@ struct Event11 {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Event12 {
+struct Event11 {
     r#type: String,
     eventId: String,
     parentId: String,
@@ -193,7 +166,7 @@ struct Event12 {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Event13 {
+struct Event12 {
     id: String,
     description: String,
     descriptionKey: String,
@@ -203,47 +176,23 @@ struct Event13 {
     singleOnly: bool,
     notes: String,
     period: Period,
-    outcomes: Vec<HandicapOutcome>
+    outcomes: Vec<Outcome>
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Event14 {
+struct Event13 {
     id: String,
     description: String,
     status: String,
     r#type: String,
-    competitorId: String,
+    competitorId: Option<String>,
     price: Price
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Event15 {
-    id: String,
-    description: String,
-    defaultType: bool,
-    alternateType: bool,
-    markets: Vec<HandicapMarket>,
-    order: usize,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Event16 {
-    id: String,
-    link: String,
-    status: String,
-    startTime: usize,
-    live: bool,
-    denySameGame: String,
-    teaserAllowed: bool,
-    notes: String
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Event17 {
+struct Event14 {
     r#type: String,
     eventId: String,
     parentId: String,
@@ -253,35 +202,25 @@ struct Event17 {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Event18 {
-    id: String,
-    description: String,
-    status: String,
-    r#type: String,
-    price: HandicapPrice
-}
-
-/*#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Event19 {
+struct Event15 {
     id: String,
     description: String,
     r#type: String,
     link: String,
     status: String,
     sport: String,
-    startTime: usize,
+    startTime: i64,
     live: bool,
     awayTeamFirst: bool,
     denySameGame: String,
     teaserAllowed: bool,
     competitionId: String,
     notes: String,
-    numMarkets: usize,
-    lastModified: usize,
+    numMarkets: i64,
+    lastModified: i64,
     competitors: Vec<Competitor>,
-    displayGroups: Vec<DisplayGroup>
-}*/
+    displayGroups: Vec<DisplayGroup>,
+}
 
 fn main() {
     let runtime = tokio::runtime::Builder::new_current_thread().enable_io().build().unwrap();
@@ -323,6 +262,7 @@ fn main() {
                 println!("close");
                 std::process::exit(1);   
             } else if msg.opcode() == Opcode::Text {
+                let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
                 let msg_data = msg.as_text().unwrap();
                 let events = msg_data.split("|").collect::<Vec<&str>>();
                 for event in events {
@@ -341,47 +281,38 @@ fn main() {
                     let event13 = serde_json::from_str::<Event13>(event);
                     let event14 = serde_json::from_str::<Event14>(event);
                     let event15 = serde_json::from_str::<Event15>(event);
-                    let event16 = serde_json::from_str::<Event16>(event);
-                    let event17 = serde_json::from_str::<Event17>(event);
-                    let event18 = serde_json::from_str::<Event18>(event);
                     if event1.is_ok() {
-                        println!("event1: {}", event);
+                        println!("{timestamp}: event1: {}", event);
                     } else if event2.is_ok() {
-                        println!("event2: {}", event);
+                        println!("{timestamp}: event2: {}", event);
                     } else if event3.is_ok() {
-                        println!("event3: {}", event);
+                        println!("{timestamp}: event3: {}", event);
                     } else if event4.is_ok() {
-                        println!("event4: {}", event);
+                        println!("{timestamp}: event4: {}", event);
                     } else if event5.is_ok() {
-                        println!("event5: {}", event);
+                        println!("{timestamp}: event5: {}", event);
                     } else if event6.is_ok() {
-                        println!("event6: {}", event);
+                        println!("{timestamp}: event6: {}", event);
                     } else if event7.is_ok() {
-                        println!("event7: {}", event);
+                        println!("{timestamp}: event7: {}", event);
                     } else if event8.is_ok() {
-                        println!("event8: {}", event);
+                        println!("{timestamp}: event8: {}", event);
                     } else if event9.is_ok() {
-                        println!("event9: {}", event);
+                        println!("{timestamp}: event9: {}", event);
                     } else if event10.is_ok() {
-                        println!("event10: {}", event);
+                        println!("{timestamp}: event10: {}", event);
                     } else if event11.is_ok() {
-                        println!("event11: {}", event);
+                        println!("{timestamp}: event11: {}", event);
                     } else if event12.is_ok() {
-                        println!("event12: {}", event);
+                        println!("{timestamp}: event12: {}", event);
                     } else if event13.is_ok() {
-                        println!("event13: {}", event);
+                        println!("{timestamp}: event13: {}", event);
                     } else if event14.is_ok() {
-                        println!("event14: {}", event);
+                        println!("{timestamp}: event14: {}", event);
                     } else if event15.is_ok() {
-                        println!("event15: {}", event);
-                    } else if event16.is_ok() {
-                        println!("event16: {}", event);
-                    } else if event17.is_ok() {
-                        println!("event17: {}", event);
-                    } else if event18.is_ok() {
-                        println!("event18: {}", event);
+                        println!("{timestamp}: event15: {}", event);
                     } else {
-                        println!("unk: {}", event);
+                        println!("{timestamp}: unk: {}", event);
                     } 
                 }
             }
