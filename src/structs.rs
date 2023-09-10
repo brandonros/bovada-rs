@@ -186,12 +186,12 @@ pub struct Path {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Event {
-    pub id: String
+    pub id: String,
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SportsEventCoupon {
     pub path: Vec<Path>,
-    pub events: Vec<DisplayGroupsEvent>
+    pub events: Vec<DisplayGroupsEvent>,
 }

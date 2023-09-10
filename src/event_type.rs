@@ -30,7 +30,7 @@ impl EventType {
         try_parse_event!(event, MarketsEvent);
         try_parse_event!(event, OutcomesEvent);
         try_parse_event!(event, DisplayGroupsEvent);
-        
+
         panic!("unable to determine event type {}", event)
     }
 }
