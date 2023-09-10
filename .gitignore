@@ -3,3 +3,4 @@ snapshots/
 rust-websocket-lite/
 output.txt
 .DS_Store
+output.tsv

@@ -3,6 +3,13 @@
 use serde::Deserialize;
 
 #[derive(Deserialize)]
+pub enum Status {
+    O,
+    D,
+    S
+}
+
+#[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Price {
     pub id: String,
@@ -23,7 +30,7 @@ pub struct Market {
     pub description: String,
     pub key: String,
     pub marketTypeId: String,
-    pub status: String,
+    pub status: Status,
     pub singleOnly: bool,
     pub notes: String,
     pub period: Period,
@@ -45,7 +52,7 @@ pub struct Period {
 pub struct Outcome {
     pub id: String,
     pub description: String,
-    pub status: String,
+    pub status: Status,
     pub r#type: String,
     pub competitorId: Option<String>,
     pub price: Price,
@@ -72,77 +79,52 @@ pub struct DisplayGroup {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct Event1 {
-    pub eventId: String,
-    pub target: String,
-    pub r#type: String
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Event2 {
-    pub id: String,
-    pub notes: String,
-    pub singleOnly: bool,
-    pub status: String
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Event3 {
-    pub id: String,
-    pub price: Price
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Event4 {
-    pub eventId: String,
-    pub parentId: String,
-    pub target: String,
-    pub r#type: String
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Event5 {
+pub struct EmptyEvent {
     pub id: usize
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct Event6 {
-    pub r#type: String,
-    pub eventId: String,
-    pub index: i64,
-    pub target: String
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Event7 {
-    pub id: String,
-    pub status: String
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Event8 {
-    pub id: String,
-    pub status: String,
-    pub description: String
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Event9 {
+pub struct NumMarketsEvent {
     pub id: String,
     pub numMarkets: usize
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct Event10 {
+pub struct TargetEvent {
+    pub eventId: String,
+    pub r#type: String,
+    pub target: String,
+    pub parentId: Option<String>,
+    pub index: Option<i64>,
+    pub mode: Option<String>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PriceEvent {
+    pub id: String,
+    pub price: Price,
+    pub description: Option<String>,
+    pub status: Option<String>,
+    pub r#type: Option<String>,
+    pub competitorId: Option<String>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StatusEvent {
+    pub id: String,
+    pub status: Status,
+    pub description: Option<String>,
+    pub notes: Option<String>,
+    pub singleOnly: Option<bool>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MarketsEvent {
     pub id: String,
     pub description: String,
     pub defaultType: bool,
@@ -153,23 +135,13 @@ pub struct Event10 {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct Event11 {
-    pub r#type: String,
-    pub eventId: String,
-    pub parentId: String,
-    pub mode: String,
-    pub target: String
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Event12 {
+pub struct OutcomesEvent {
     pub id: String,
     pub description: String,
     pub descriptionKey: String,
     pub key: String,
     pub marketTypeId: String,
-    pub status: String,
+    pub status: Status,
     pub singleOnly: bool,
     pub notes: String,
     pub period: Period,
@@ -178,33 +150,12 @@ pub struct Event12 {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct Event13 {
-    pub id: String,
-    pub description: String,
-    pub status: String,
-    pub r#type: String,
-    pub competitorId: Option<String>,
-    pub price: Price
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Event14 {
-    pub r#type: String,
-    pub eventId: String,
-    pub parentId: String,
-    pub index: i64,
-    pub target: String
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Event15 {
+pub struct DisplayGroupsEvent {
     pub id: String,
     pub description: String,
     pub r#type: String,
     pub link: String,
-    pub status: String,
+    pub status: Status,
     pub sport: String,
     pub startTime: i64,
     pub live: bool,
