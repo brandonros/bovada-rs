@@ -1,7 +1,7 @@
 set datafile separator ","
 set xdata time
 set timefmt "%s"  # Assumes timestamps are in Unix epoch format
-set format x "%h:%M"  # Format the x-axis labels
+set format x "%I:%M"  # Format the x-axis labels
 set xlabel "Time"
 set ylabel "Implied Probability"
 set yrange [0:1]
