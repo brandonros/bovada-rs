@@ -1,13 +1,13 @@
+mod bovada;
 mod event_type;
 mod structs;
-mod ws_error;
-mod bovada;
 mod utilities;
+mod ws_error;
 
 use std::sync::Arc;
 
-use crate::ws_error::WsError;
 use crate::bovada::Bovada;
+use crate::ws_error::WsError;
 
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // get slug from arguments

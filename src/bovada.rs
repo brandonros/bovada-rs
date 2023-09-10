@@ -1,26 +1,27 @@
 use std::pin::Pin;
 
-use futures_util::{StreamExt, SinkExt};
+use futures_util::{SinkExt, StreamExt};
 use websocket_lite::{Message, Opcode};
 
-use crate::{structs::SportsEventCoupon, ws_error::WsError, utilities, event_type::EventType};
+use crate::{event_type::EventType, structs::SportsEventCoupon, utilities, ws_error::WsError};
 
 pub struct Bovada {
-    slug: String
+    slug: String,
 }
 
 impl Bovada {
     pub fn new(slug: String) -> Bovada {
-        Bovada {
-            slug
-        }
+        Bovada { slug }
     }
 
-    pub async fn get_event_ids(&self) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_event_ids(
+        &self,
+    ) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
         // perform http get
         let http_client = reqwest::Client::new();
         let request = http_client.get(format!(
-            "https://www.bovada.lv/services/sports/event/coupon/events/A/description/{}?lang=en", self.slug
+            "https://www.bovada.lv/services/sports/event/coupon/events/A/description/{}?lang=en",
+            self.slug
         ));
         let response = request.send().await?;
         assert_eq!(response.status(), reqwest::StatusCode::OK);
@@ -38,7 +39,9 @@ impl Bovada {
 
     async fn send_subscribe_message(
         &self,
-        ws_sink: &mut Pin<Box<impl futures_util::sink::Sink<Message, Error = websocket_lite::Error>>>,
+        ws_sink: &mut Pin<
+            Box<impl futures_util::sink::Sink<Message, Error = websocket_lite::Error>>,
+        >,
         event_id: &str,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let timestamp = utilities::current_millis()?;
@@ -46,9 +49,7 @@ impl Bovada {
             "SUBSCRIBE|A|/events/{}.{}?delta=true",
             event_id, timestamp
         ));
-        ws_sink
-            .send(message)
-            .await
+        ws_sink.send(message).await
     }
 
     async fn handle_incoming_messages(
@@ -75,17 +76,17 @@ impl Bovada {
                         let event_type = EventType::from(event);
                         println!("{event_id}\t{timestamp}\t{event_type:?}\t{event}");
                     }
-                },
+                }
                 Opcode::Close => {
                     return Err(Box::new(WsError::CloseOpcodeReceived));
-                },
+                }
                 Opcode::Binary => unimplemented!(),
                 Opcode::Ping => unimplemented!(),
                 Opcode::Pong => unimplemented!(),
             }
         }
     }
-        
+
     pub async fn create_event_subscription(
         &self,
         event_id: String,
@@ -110,6 +111,7 @@ impl Bovada {
         // print header
         println!("event_id\ttimestamp\tevent_type\tevent");
         // receive and process messages
-        self.handle_incoming_messages(&mut ws_stream, &event_id).await
+        self.handle_incoming_messages(&mut ws_stream, &event_id)
+            .await
     }
 }
