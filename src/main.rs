@@ -1,46 +1,14 @@
 mod structs;
+mod event_type;
+mod ws_error;
 
 use std::pin::Pin;
 
 use futures_util::{SinkExt, StreamExt};
-use structs::*;
 use websocket_lite::{Message, Opcode};
+use crate::{event_type::EventType, ws_error::WsError};
 
-#[derive(Debug)]
-enum EventType {
-    TargetEvent,
-    PriceEvent,
-    EmptyEvent,
-    StatusEvent,
-    NumMarketsEvent,
-    MarketsEvent,
-    OutcomesEvent,
-    DisplayGroupsEvent,
-}
-
-fn determine_event_type(event: &str) -> EventType {
-    if serde_json::from_str::<TargetEvent>(event).is_ok() {
-        return EventType::TargetEvent;
-    } else if serde_json::from_str::<PriceEvent>(event).is_ok() {
-        return EventType::PriceEvent;
-    } else if serde_json::from_str::<EmptyEvent>(event).is_ok() {
-        return EventType::EmptyEvent;
-    } else if serde_json::from_str::<StatusEvent>(event).is_ok() {
-        return EventType::StatusEvent;
-    } else if serde_json::from_str::<NumMarketsEvent>(event).is_ok() {
-        return EventType::NumMarketsEvent;
-    } else if serde_json::from_str::<MarketsEvent>(event).is_ok() {
-        return EventType::MarketsEvent;
-    } else if serde_json::from_str::<OutcomesEvent>(event).is_ok() {
-        return EventType::OutcomesEvent;
-    } else if serde_json::from_str::<DisplayGroupsEvent>(event).is_ok() {
-        return EventType::DisplayGroupsEvent;
-    } else {
-        panic!("unable to determine event type {event}");
-    }
-}
-
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>>  {
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_io()
         .build()?;
@@ -48,7 +16,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn bovada_subscription() -> anyhow::Result<()> {
+async fn bovada_subscription() -> Result<(), Box<dyn std::error::Error + Send + Sync>>  {
     // Connect
     let subscription_id = uuid::Uuid::new_v4().to_string().to_ascii_uppercase();
     let url = format!(
@@ -59,8 +27,7 @@ async fn bovada_subscription() -> anyhow::Result<()> {
     let ws = ws_client
         .async_connect()
         .await
-        .map_err(|err| anyhow::anyhow!(err))?;
-
+        .map_err(|err| WsError::ConnectError(err))?;
     // Split the WebSocket
     let (ws_sink, ws_stream) = ws.split::<Message>();
     let mut ws_sink = Box::pin(ws_sink);
@@ -78,41 +45,40 @@ async fn bovada_subscription() -> anyhow::Result<()> {
 
 async fn subscribe_to_event(
     ws_sink: &mut Pin<Box<impl futures_util::sink::Sink<Message, Error = websocket_lite::Error>>>,
-) -> anyhow::Result<()> {
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>>  {
     let args = std::env::args().collect::<Vec<String>>();
     let timestamp = current_millis()?;
     let event_id = &args
         .get(1)
-        .ok_or(anyhow::anyhow!("Event ID argument missing"))?;
+        .ok_or(WsError::InvalidArgumentsError)?;
     ws_sink
         .send(Message::text(format!(
             "SUBSCRIBE|A|/events/{}.{}?delta=true",
             event_id, timestamp
         )))
         .await
-        .map_err(|err| anyhow::anyhow!(err))
 }
 
 async fn handle_messages(
     ws_stream: &mut Pin<
         Box<impl futures_util::stream::Stream<Item = Result<Message, websocket_lite::Error>>>,
     >,
-) -> anyhow::Result<()> {
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     loop {
         let msg = ws_stream
             .next()
             .await
-            .ok_or(anyhow::anyhow!("Stream ended prematurely"))?
-            .map_err(|err| anyhow::anyhow!(err))?;
+            .ok_or(WsError::StreamEnded)?
+            .map_err(WsError::MessageError)?;
         match msg.opcode() {
             Opcode::Text => {
                 let timestamp = current_seconds()?;
                 let msg_data = msg
                     .as_text()
-                    .ok_or(anyhow::anyhow!("Failed to get message data as text"))?;
+                    .ok_or(WsError::TextDecodeError)?;
                 let events = msg_data.split('|').collect::<Vec<_>>();
                 for event in events {
-                    let event_type = determine_event_type(event);
+                    let event_type = EventType::from(event);
                     println!("{timestamp}\t{event_type:?}\t{event}");
                 }
             }
@@ -120,7 +86,7 @@ async fn handle_messages(
             Opcode::Ping => unimplemented!(),
             Opcode::Pong => unimplemented!(),
             Opcode::Close => {
-                return Err(anyhow::anyhow!("Received close opcode"));
+                return Err(Box::new(WsError::CloseOpcodeReceived));
             }
         }
     }
