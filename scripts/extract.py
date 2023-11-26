@@ -14,7 +14,7 @@ def main():
 
     with open(f"output-{event_id}.tsv", "r") as infile, open(output_filename, "w") as outfile:
         # Write the header to the CSV
-        outfile.write("timestamp\timplied_probability\n")
+        outfile.write("timestamp\timplied_probability\thandicap\n")
 
         # Iterate through each line of the input
         for line in infile:
@@ -25,9 +25,16 @@ def main():
                     timestamp = parts[1]
                     # Try to extract the decimal price from the JSON string
                     event = json.loads(parts[3])
-                    decimal_price = float(event["price"]["decimal"])
-                    implied_probability = round(1 / decimal_price, 2)
-                    outfile.write(f"{timestamp}\t{implied_probability}\n")
+
+                    if "handicap" in event["price"]:
+                        decimal_price = float(event["price"]["decimal"])
+                        handicap = float(event["price"]["handicap"])
+                        implied_probability = round(1 / decimal_price, 2)
+                        outfile.write(f"{timestamp}\t{implied_probability}\t{handicap}\n")
+                    else:
+                        decimal_price = float(event["price"]["decimal"])
+                        implied_probability = round(1 / decimal_price, 2)
+                        outfile.write(f"{timestamp}\t{implied_probability}\t0\n")
                 except (IndexError, ValueError, KeyError, TypeError) as e:
                     # Handling potential JSON parsing errors, or missing keys
                     continue

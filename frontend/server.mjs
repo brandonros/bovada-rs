@@ -3,7 +3,7 @@ import express from 'express'
 
 const main = async () => {
     const app = express()
-    app.use('/generated', express.static('../generated'))
+    app.use('/generated', express.static('../generated', { etag: false }))
     app.get('/', (req, res) => {
         const template = fs.readFileSync('./static/index.html', 'utf8')
         const outcomeId1 = req.query.outcomeId1

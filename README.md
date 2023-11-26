@@ -6,13 +6,14 @@ Real time Bovada WebSocket event streaming client
 
 ```shell
 # scrape event
-EVENT_SLUG="football/college-football/floridastate-florida-202311251900"
-cargo run -- "$EVENT_SLUG"
+EVENT_SLUG="football/college-football/floridastate-florida-202311251900" bash -c 'cargo run -- "$EVENT_SLUG"'
 # plot loop
-EVENT_ID="11967642"
-OUTCOME_ID_1="1484241161"
-OUTCOME_ID_2="1484241162"
-./scripts/generate.sh "$EVENT_ID" "$OUTCOME_ID_1" "$OUTCOME_ID_2"
+EVENT_ID="11967642" OUTCOME_ID_1="1484241161" OUTCOME_ID_2="1484241162" bash -c './scripts/generate.sh "$EVENT_ID" "$OUTCOME_ID_1" "$OUTCOME_ID_2"'
+EVENT_ID="11967642" OUTCOME_ID_1="1484241194" OUTCOME_ID_2="1484241196" bash -c './scripts/generate.sh "$EVENT_ID" "$OUTCOME_ID_1" "$OUTCOME_ID_2"'
+EVENT_ID="11967642" OUTCOME_ID_1="1484241188" OUTCOME_ID_2="1484241187" bash -c './scripts/generate.sh "$EVENT_ID" "$OUTCOME_ID_1" "$OUTCOME_ID_2"'
 # serve html + img
-cd frontend && npm run server # open http://127.0.0.1:8080/?outcomeId1=1484241161&outcomeId2=1484241162
+cd frontend && npm run server 
+# open http://127.0.0.1:8080/?outcomeId1=1484241161&outcomeId2=1484241162
+# open http://127.0.0.1:8080/?outcomeId1=1484241194&outcomeId2=1484241196
+# open http://127.0.0.1:8080/?outcomeId1=1484241188&outcomeId2=1484241187
 ```
