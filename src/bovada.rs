@@ -112,8 +112,9 @@ impl Bovada {
         // send subscribe message
         self.send_subscribe_message(&mut ws_sink, &event_id).await?;
         // print header
-        let file_exists = std::fs::metadata("output.tsv").map(|meta| meta.len() > 0).unwrap_or(false);
-        let mut file = OpenOptions::new().append(true).create(true).open("output.tsv")?;
+        let filename = format!("output-{event_id}.tsv");
+        let file_exists = std::fs::metadata(&filename).map(|meta| meta.len() > 0).unwrap_or(false);
+        let mut file = OpenOptions::new().append(true).create(true).open(&filename)?;
         if !file_exists {
             let line = format!("event_id\ttimestamp\tevent_type\tevent\n");
             file.write_all(line.as_bytes())?;

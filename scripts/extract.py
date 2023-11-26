@@ -8,10 +8,11 @@ def main():
         print("Usage: extract.py <OUTCOME_ID>")
         sys.exit(1)
 
-    outcome_id = sys.argv[1]
+    event_id = sys.argv[1]
+    outcome_id = sys.argv[2]
     output_filename = f"./generated/{outcome_id}.tsv"
 
-    with open("output.tsv", "r") as infile, open(output_filename, "w") as outfile:
+    with open(f"output-{event_id}.tsv", "r") as infile, open(output_filename, "w") as outfile:
         # Write the header to the CSV
         outfile.write("timestamp\timplied_probability\n")
 

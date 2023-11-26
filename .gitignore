@@ -4,3 +4,5 @@ snapshots/
 output.txt
 output.tsv
 generated/
+output-*.tsv
+node_modules/
