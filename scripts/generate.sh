@@ -1,8 +1,11 @@
 #!/bin/bash
 
+OUTCOME_ID_1="$1"
+OUTCOME_ID_2="$2"
+
 while true
 do
-    ./scripts/extract.py "1484002205" && ./scripts/plot.sh "1484002205" # Ohio
-    ./scripts/extract.py "1484002204" && ./scripts/plot.sh "1484002204" # Michigan
+    ./scripts/extract.py "$OUTCOME_ID_1" && ./scripts/plot.sh "$OUTCOME_ID_1"
+    ./scripts/extract.py "$OUTCOME_ID_2" && ./scripts/plot.sh "$OUTCOME_ID_2"
     sleep 5
 done
