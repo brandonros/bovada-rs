@@ -1,18 +1,73 @@
 import express from 'express'
-import { globSync } from 'glob'
+import fs from 'fs'
+import { execa } from 'execa'
 
-const extractOutcomeId = (filename) => {
-    const pattern = /\.\.\/generated\/\d+-(\d+)\.png/
-    const matches = filename.match(pattern)
-    return matches[1]
+const parseEvents = (eventId) => {
+    const output = fs.readFileSync(`../output-${eventId}.tsv`, 'utf8')
+    const lines = output.split('\n')
+    const headers = lines[0].split('\t')
+    const rows = lines.slice(1)
+    return rows.map(row => {
+        const splitRow = row.split('\t')
+        const mappedRow = {}
+        for (let i = 0; i < headers.length; ++i) {
+            const header = headers[i]
+            mappedRow[header] = splitRow[i]
+        }
+        return mappedRow
+    })
+}
+
+const extractOutcomes = (eventId) => {
+    const events = parseEvents(eventId)
+    const outcomesMap = {}
+    const marketsEvents = events
+        .filter(event => event.event_type === 'MarketsEvent')
+        .map(event => JSON.parse(event.event))
+    const gameLineMarketEvents = marketsEvents.filter(marketsEvent => marketsEvent.description === 'Game Lines')
+    for (const gameLineMarketEvent of gameLineMarketEvents) {
+        const moneylineMarket = gameLineMarketEvent.markets.find(market => market.description === 'Moneyline')
+        if (moneylineMarket && moneylineMarket.period.description === 'Live Game') {
+            for (const outcome of moneylineMarket.outcomes) {
+                outcomesMap[outcome.id] = {
+                    market: moneylineMarket,
+                    outcome
+                }
+            }
+        }
+        const pointSpreadMarket = gameLineMarketEvent.markets.find(market => market.description === 'Point Spread')
+        if (pointSpreadMarket && pointSpreadMarket.period.description === 'Live Game') {
+            for (const outcome of pointSpreadMarket.outcomes) {
+                outcomesMap[outcome.id] = {
+                    market: pointSpreadMarket,
+                    outcome
+                }
+            }
+        }
+        const totalSpreadMarket = gameLineMarketEvent.markets.find(market => market.description === 'Total')
+        if (totalSpreadMarket && totalSpreadMarket.period.description === 'Live Game') {
+            for (const outcome of totalSpreadMarket.outcomes) {
+                outcomesMap[outcome.id] = {
+                    market: totalSpreadMarket,
+                    outcome
+                }
+            }
+        }
+    }
+    return outcomesMap
 }
 
 const main = async () => {
     const app = express()
     app.use('/generated', express.static('../generated', { etag: false }))
-    app.get('/events/:eventId', (req, res) => {
+    app.get('/events/:eventId', async (req, res) => {
         const { eventId } = req.params
-        const filenames = globSync(`../generated/${eventId}-*.png`)
+        const outcomesMap = extractOutcomes(eventId)
+        const outcomeIds = Object.keys(outcomesMap)
+        for (const outcomeId of outcomeIds) {
+            await execa('./scripts/extract.py', [eventId, outcomeId], { cwd: '../' })
+            await execa('./scripts/plot.sh', [eventId, outcomeId], { cwd: '../' })
+        }
         const html = `
             <!doctype html>
             <html>
@@ -44,7 +99,7 @@ const main = async () => {
                     </style>
                 </head>
                 <body>
-                    ${filenames.map(filename => `<div>${extractOutcomeId(filename)}<br><img src="../../generated/${eventId}-${extractOutcomeId(filename)}.png"></div>`).join('\n')}
+                    ${outcomeIds.map(outcomeId => `<div>${`${outcomesMap[outcomeId].market.description} - ${outcomesMap[outcomeId].outcome.description}`}<br><img src="../../generated/${eventId}-${outcomeId}.png"></div>`).join('\n')}
             
                     <script type="text/javascript">
                         setTimeout(() => {
