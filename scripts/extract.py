@@ -5,12 +5,12 @@ import json
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: extract.py <OUTCOME_ID>")
+        print("Usage: extract.py <EVENT_ID> <OUTCOME_ID>")
         sys.exit(1)
 
     event_id = sys.argv[1]
     outcome_id = sys.argv[2]
-    output_filename = f"./generated/{outcome_id}.tsv"
+    output_filename = f"./generated/{event_id}-{outcome_id}.tsv"
 
     with open(f"output-{event_id}.tsv", "r") as infile, open(output_filename, "w") as outfile:
         # Write the header to the CSV

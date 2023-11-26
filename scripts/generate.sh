@@ -6,7 +6,7 @@ OUTCOME_ID_2="$3"
 
 while true
 do
-    ./scripts/extract.py "$EVENT_ID" "$OUTCOME_ID_1" && ./scripts/plot.sh "$OUTCOME_ID_1"
-    ./scripts/extract.py "$EVENT_ID" "$OUTCOME_ID_2" && ./scripts/plot.sh "$OUTCOME_ID_2"
+    ./scripts/extract.py "$EVENT_ID" "$OUTCOME_ID_1" && ./scripts/plot.sh "$EVENT_ID" "$OUTCOME_ID_1"
+    ./scripts/extract.py "$EVENT_ID" "$OUTCOME_ID_2" && ./scripts/plot.sh "$EVENT_ID" "$OUTCOME_ID_2"
     sleep 5
 done
