@@ -1,6 +1,6 @@
-use std::pin::Pin;
+use std::{pin::Pin, fs::{OpenOptions, File}, io::Write, error::Error};
 
-use futures_util::{SinkExt, StreamExt};
+use futures_util::{SinkExt, StreamExt, Sink};
 use websocket_lite::{Message, Opcode};
 
 use crate::{event_type::EventType, structs::SportsEventCoupon, utilities, ws_error::WsError};
@@ -16,7 +16,7 @@ impl Bovada {
 
     pub async fn get_event_ids(
         &self,
-    ) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Vec<String>, Box<dyn Error + Send + Sync>> {
         // perform http get
         let http_client = reqwest::Client::new();
         let request = http_client.get(format!(
@@ -40,10 +40,10 @@ impl Bovada {
     async fn send_subscribe_message(
         &self,
         ws_sink: &mut Pin<
-            Box<impl futures_util::sink::Sink<Message, Error = websocket_lite::Error>>,
+            Box<impl Sink<Message, Error = websocket_lite::Error>>,
         >,
         event_id: &str,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), Box<dyn Error + Send + Sync>> {
         let timestamp = utilities::current_millis()?;
         let message = Message::text(format!(
             "SUBSCRIBE|A|/events/{}.{}?delta=true",
@@ -58,7 +58,8 @@ impl Bovada {
             Box<impl futures_util::stream::Stream<Item = Result<Message, websocket_lite::Error>>>,
         >,
         event_id: &str,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        mut file: File
+    ) -> Result<(), Box<dyn Error + Send + Sync>> {
         loop {
             // get next message from stream
             let msg = ws_stream
@@ -74,7 +75,9 @@ impl Bovada {
                     let events = msg_data.split('|').collect::<Vec<_>>();
                     for event in events {
                         let event_type = EventType::from(event);
-                        println!("{event_id}\t{timestamp}\t{event_type:?}\t{event}");
+                        let line = format!("{event_id}\t{timestamp}\t{event_type:?}\t{event}\n");
+                        file.write_all(line.as_bytes())?;
+                        file.flush()?;
                     }
                 }
                 Opcode::Close => {
@@ -90,7 +93,7 @@ impl Bovada {
     pub async fn create_event_subscription(
         &self,
         event_id: String,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), Box<dyn Error + Send + Sync>> {
         // connect websocket
         let subscription_id = uuid::Uuid::new_v4().to_string().to_ascii_uppercase();
         let url = format!(
@@ -109,9 +112,15 @@ impl Bovada {
         // send subscribe message
         self.send_subscribe_message(&mut ws_sink, &event_id).await?;
         // print header
-        println!("event_id\ttimestamp\tevent_type\tevent");
+        let file_exists = std::fs::metadata("output.tsv").map(|meta| meta.len() > 0).unwrap_or(false);
+        let mut file = OpenOptions::new().append(true).create(true).open("output.tsv")?;
+        if !file_exists {
+            let line = format!("event_id\ttimestamp\tevent_type\tevent\n");
+            file.write_all(line.as_bytes())?;
+            file.flush()?;
+        }
         // receive and process messages
-        self.handle_incoming_messages(&mut ws_stream, &event_id)
+        self.handle_incoming_messages(&mut ws_stream, &event_id, file)
             .await
     }
 }

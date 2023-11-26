@@ -6,7 +6,7 @@ Real time Bovada WebSocket event streaming client
 
 ```shell
 # scrape event
-EVENT_SLUG="tennis/us-open/men-s-singles/daniil-medvedev-novak-djokovic-202309101618"
+EVENT_SLUG="football/college-football/ohio-state-2-michigan-3-202311251200"
 cargo run -- "$EVENT_SLUG"
 # plot loop
 ./scripts/generate.sh

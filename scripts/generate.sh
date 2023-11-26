@@ -2,7 +2,7 @@
 
 while true
 do
-    ./scripts/extract.py "1422096928" && ./scripts/plot.sh "1422096928" # Daniil Medvedev
-    ./scripts/extract.py "1422096929" && ./scripts/plot.sh "1422096929" # Novak Djokovic
+    ./scripts/extract.py "1484002205" && ./scripts/plot.sh "1484002205" # Ohio
+    ./scripts/extract.py "1484002204" && ./scripts/plot.sh "1484002204" # Michigan
     sleep 5
 done

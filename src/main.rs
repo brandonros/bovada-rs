@@ -4,12 +4,13 @@ mod structs;
 mod utilities;
 mod ws_error;
 
+use std::error::Error;
 use std::sync::Arc;
 
 use crate::bovada::Bovada;
 use crate::ws_error::WsError;
 
-fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     // get slug from arguments
     let args = std::env::args().collect::<Vec<String>>();
     let slug = args.get(1).ok_or(WsError::InvalidArgumentsError)?;
@@ -25,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // get event ids
         let event_ids = api.get_event_ids().await?;
         // spawn 1 subscriber future per event ID
-        let handles = event_ids
+        let task_handles = event_ids
             .into_iter()
             .map(|event_id| {
                 let api_clone = api.clone();
@@ -35,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             })
             .collect::<Vec<_>>();
         // await all futures in parallel
-        let results = futures::future::join_all(handles).await;
+        let results = futures::future::join_all(task_handles).await;
         // error check all results
         for result in results {
             let join_result = result?;

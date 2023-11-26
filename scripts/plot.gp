@@ -1,4 +1,4 @@
-set datafile separator ","
+set datafile separator "\t"
 set xdata time
 set timefmt "%s"  # Assumes timestamps are in Unix epoch format
 set format x "%I:%M"  # Format the x-axis labels
