@@ -104,7 +104,7 @@ const main = async () => {
                     <script type="text/javascript">
                         setTimeout(() => {
                             window.location.reload()
-                        }, 5000)
+                        }, 10000)
                     </script>
                 </body>
             </html>
