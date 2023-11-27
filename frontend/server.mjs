@@ -60,13 +60,13 @@ const extractOutcomes = (eventId) => {
 const main = async () => {
     const app = express()
     app.use('/generated', express.static('../generated', { etag: false }))
-    app.get('/events/:eventId', async (req, res) => {
-        const { eventId } = req.params
+    app.get('/events/:eventId/:type', async (req, res) => {
+        const { eventId, type } = req.params
         const outcomesMap = extractOutcomes(eventId)
         const outcomeIds = Object.keys(outcomesMap)
         for (const outcomeId of outcomeIds) {
             await execa('./scripts/extract.py', [eventId, outcomeId], { cwd: '../' })
-            await execa('./scripts/plot.sh', [eventId, outcomeId], { cwd: '../' })
+            await execa(`./scripts/plot-${type}.sh`, [eventId, outcomeId], { cwd: '../' })
         }
         const html = `
             <!doctype html>
