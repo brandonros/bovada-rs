@@ -25,6 +25,7 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     runtime.block_on(async {
         // get event ids
         let event_ids = api.get_event_ids().await?;
+        println!("event_ids = {event_ids:?}");
         // spawn 1 subscriber future per event ID
         let task_handles = event_ids
             .into_iter()

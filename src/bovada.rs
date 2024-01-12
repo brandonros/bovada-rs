@@ -76,6 +76,7 @@ impl Bovada {
                     for event in events {
                         let event_type = EventType::from(event);
                         let line = format!("{event_id}\t{timestamp}\t{event_type:?}\t{event}\n");
+                        println!("{line}");
                         file.write_all(line.as_bytes())?;
                         file.flush()?;
                     }
