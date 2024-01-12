@@ -1,9 +1,8 @@
 import express from 'express'
-import fs from 'fs'
 import { execa } from 'execa'
 import assert from 'assert'
 
-const extractOutcomes = async (eventId) => {
+const buildOutcomesMap = async (eventId) => {
     const eventSlug = process.env.EVENT_SLUG
     const response = await fetch(`https://www.bovada.lv/services/sports/event/coupon/events/A/description/${eventSlug}?lang=en`)
     assert(response.status === 200)
@@ -49,11 +48,12 @@ const main = async () => {
     app.get('/events/:eventId/:type', async (req, res) => {
         try {
             const { eventId, type } = req.params
-            const outcomesMap = await extractOutcomes(eventId)
+            const outcomesMap = await buildOutcomesMap(eventId)
+            console.log(outcomesMap)
             const outcomeIds = Object.keys(outcomesMap)
             assert(outcomeIds.length > 0)
             for (const outcomeId of outcomeIds) {
-                await execa('./scripts/extract.py', [eventId, outcomeId], { cwd: '../' })
+                await execa('./scripts/extract.js', [eventId, outcomeId], { cwd: '../' })
                 await execa(`./scripts/plot-${type}.sh`, [eventId, outcomeId], { cwd: '../' })
             }
             const html = `
@@ -105,7 +105,7 @@ const main = async () => {
             console.error(err)
             res
                 .status(500)
-                .set('Content-Type', 'text/html')
+                .set('Content-Type', 'text/plain')
                 .send(err)
         }
     })
