@@ -6,9 +6,9 @@ Real time Bovada WebSocket event streaming client
 
 ```shell
 # scrape event
-EVENT_SLUG="basketball/nba/phoenix-suns-los-angeles-lakers-202401112200" bash -c 'cargo run -- "$EVENT_SLUG"'
+cargo run
 # serve html + img
 cd frontend
-EVENT_SLUG="basketball/nba/phoenix-suns-los-angeles-lakers-202401112200" npm run server
+npm run server
 # open http://127.0.0.1:8080/events/:eventId/implied or http://127.0.0.1:8080/events/:eventId/american
 ```

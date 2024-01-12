@@ -8,12 +8,12 @@ use std::error::Error;
 use std::sync::Arc;
 
 use crate::bovada::Bovada;
-use crate::ws_error::WsError;
 
 fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
-    // get slug from arguments
-    let args = std::env::args().collect::<Vec<String>>();
-    let slug = args.get(1).ok_or(WsError::InvalidArgumentsError)?;
+    // dotenv
+    dotenv::dotenv().ok();
+    // get slug from env var
+    let slug = std::env::var("EVENT_SLUG").unwrap();
     // create api instance
     let api = Arc::new(Bovada::new(slug.clone()));
     // build async runtime

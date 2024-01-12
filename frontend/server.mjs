@@ -1,6 +1,7 @@
 import express from 'express'
 import { execa } from 'execa'
 import assert from 'assert'
+import dotenv from 'dotenv'
 
 const buildOutcomesMap = async (eventId) => {
     const eventSlug = process.env.EVENT_SLUG
@@ -43,13 +44,13 @@ const buildOutcomesMap = async (eventId) => {
 }
 
 const main = async () => {
+    dotenv.config({ path: '../.env' })
     const app = express()
     app.use('/generated', express.static('../generated', { etag: false }))
     app.get('/events/:eventId/:type', async (req, res) => {
         try {
             const { eventId, type } = req.params
             const outcomesMap = await buildOutcomesMap(eventId)
-            console.log(outcomesMap)
             const outcomeIds = Object.keys(outcomesMap)
             assert(outcomeIds.length > 0)
             for (const outcomeId of outcomeIds) {

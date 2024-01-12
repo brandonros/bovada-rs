@@ -1,6 +1,5 @@
 #[derive(Debug)]
 pub enum WsError {
-    InvalidArgumentsError,
     ConnectError(websocket_lite::Error),
     StreamEnded,
     MessageError(websocket_lite::Error),
