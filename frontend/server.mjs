@@ -3,18 +3,25 @@ import { execa } from 'execa'
 import assert from 'assert'
 import dotenv from 'dotenv'
 
-const buildOutcomesMap = async (eventId) => {
+const buildOutcomesMap = async (eventId, periodDescription) => {
     const eventSlug = process.env.EVENT_SLUG
-    const response = await fetch(`https://www.bovada.lv/services/sports/event/coupon/events/A/description/${eventSlug}?lang=en`)
+    const requestUrl = `https://www.bovada.lv/services/sports/event/coupon/events/A/description/${eventSlug}?lang=en`
+    console.log({
+        requestUrl
+    })
+    const response = await fetch(requestUrl)
     assert(response.status === 200)
     const responseBody = await response.json()
-    const events = responseBody[0].events
+    const coupons = responseBody
+    assert(coupons.length === 1)
+    const coupon = coupons[0]
+    const events = coupon.events
     const event = events.find(event => event.id === eventId)
     const displayGroups = event.displayGroups
     const gameLinesDisplayGroup = displayGroups.find(displayGroup => displayGroup.description === 'Game Lines')
     const outcomesMap = {}
     const moneylineMarket = gameLinesDisplayGroup.markets.find(market => market.description === 'Moneyline')
-    if (moneylineMarket && moneylineMarket.period.description === 'Live Game') {
+    if (moneylineMarket && moneylineMarket.period.description === periodDescription) {
         for (const outcome of moneylineMarket.outcomes) {
             outcomesMap[outcome.id] = {
                 market: moneylineMarket,
@@ -23,7 +30,7 @@ const buildOutcomesMap = async (eventId) => {
         }
     }
     const pointSpreadMarket = gameLinesDisplayGroup.markets.find(market => market.description === 'Point Spread')
-    if (pointSpreadMarket && pointSpreadMarket.period.description === 'Live Game') {
+    if (pointSpreadMarket && pointSpreadMarket.period.description === periodDescription) {
         for (const outcome of pointSpreadMarket.outcomes) {
             outcomesMap[outcome.id] = {
                 market: pointSpreadMarket,
@@ -32,7 +39,7 @@ const buildOutcomesMap = async (eventId) => {
         }
     }
     const totalSpreadMarket = gameLinesDisplayGroup.markets.find(market => market.description === 'Total')
-    if (totalSpreadMarket && totalSpreadMarket.period.description === 'Live Game') {
+    if (totalSpreadMarket && totalSpreadMarket.period.description === periodDescription) {
         for (const outcome of totalSpreadMarket.outcomes) {
             outcomesMap[outcome.id] = {
                 market: totalSpreadMarket,
@@ -50,12 +57,34 @@ const main = async () => {
     app.get('/events/:eventId/:type', async (req, res) => {
         try {
             const { eventId, type } = req.params
-            const outcomesMap = await buildOutcomesMap(eventId)
+            const periodDescription = req.query.periodDescription || 'Live Game'
+            const outcomesMap = await buildOutcomesMap(eventId, periodDescription)
             const outcomeIds = Object.keys(outcomesMap)
             assert(outcomeIds.length > 0)
+            const order = {
+                'Moneyline': 1,
+                'Point Spread': 2,
+                'Total': 3
+            }
+            outcomeIds.sort((a, b) => {
+                const aOutcome = outcomesMap[a]
+                const bOutcome = outcomesMap[b]
+                const aMarketDescription = aOutcome.market.description
+                const bMarketDescription = bOutcome.market.description
+                const aOrder = order[aMarketDescription]
+                const bOrder = order[bMarketDescription]
+                return aOrder - bOrder
+            })
             for (const outcomeId of outcomeIds) {
+                const outcome = outcomesMap[outcomeId]
+                const outcomeMarketDescription = outcome.market.description
+                const showY2 = outcomeMarketDescription === 'Moneyline' ? 'false' : 'true'
                 await execa('./scripts/extract.js', [eventId, outcomeId], { cwd: '../' })
-                await execa(`./scripts/plot-${type}.sh`, [eventId, outcomeId], { cwd: '../' })
+                await execa(`./scripts/plot-${type}.sh`, [
+                    eventId,
+                    outcomeId,
+                    showY2
+                ], { cwd: '../' })
             }
             const html = `
                 <!doctype html>
@@ -111,6 +140,7 @@ const main = async () => {
         }
     })
     await new Promise(resolve => app.listen(8080, resolve))
+    console.log('listening on 8080')
 }
 
 main()

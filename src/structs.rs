@@ -1,12 +1,14 @@
 #![allow(non_snake_case)]
 
 use serde::Deserialize;
+use serde_json::Value;
 
 #[derive(Deserialize)]
 pub enum Status {
     O,
     D,
     S,
+    U,
 }
 
 #[derive(Deserialize)]
@@ -169,6 +171,7 @@ pub struct DisplayGroupsEvent {
     pub lastModified: i64,
     pub competitors: Vec<Competitor>,
     pub displayGroups: Vec<DisplayGroup>,
+    pub availableSGP: Option<Value>, // TODO
 }
 
 #[derive(Deserialize)]
@@ -182,6 +185,16 @@ pub struct NewLinkEvent {
     pub denySameGame: String,
     pub teaserAllowed: bool,
     pub notes: String
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NotesEvent {
+    pub id: String,
+    pub status: String,
+    pub singleOnly: bool,
+    pub notes: String,
+    pub sortType: String,
 }
 
 #[derive(Deserialize)]

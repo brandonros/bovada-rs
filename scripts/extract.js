@@ -17,6 +17,7 @@ const main = async () => {
     const input = await fs.promises.readFile(`./output-${eventId}.tsv`, 'utf8')
     const lines = input.split('\n')
     let output = 'timestamp\timplied_probability\tamerican\thandicap\n'
+    let numRows = 0
     for (const line of lines) {
         if (!line.includes('PriceEvent')) {
             continue
@@ -35,11 +36,14 @@ const main = async () => {
             const decimalPrice = parseFloat(event.price.decimal)
             const americanPrice = parseFloat(event.price.american)
             const impliedProbability = round(1 / decimalPrice, 2)
-
             output += `${timestamp}\t${impliedProbability}\t${americanPrice}\t${handicap}\n`
+            numRows += 1
         } catch (err) {
             console.error(err)
         }
+    }
+    if (numRows === 0) {
+        throw new Error('numRows === 0')
     }
     await fs.promises.writeFile(outputFilename, output)
 }
