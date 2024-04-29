@@ -1,3 +1,4 @@
+timezone_offset = -4 * 3600
 set datafile separator "\t"
 set xdata time
 set timefmt "%s" # Assumes timestamps are in Unix epoch format
@@ -14,5 +15,5 @@ set title "Implied Probability + Handicap over Time"
 set terminal png size 1280,720
 set output output_file
 plot \
-    input_file using ($1+(-5*3600)):2 with lines title "Probability" axis x1y1, \
-    input_file using ($1+(-5*3600)):4 with lines title "Handicap" axis x1y2
+    input_file using ($1+timezone_offset):2 with lines title "Probability" axis x1y1, \
+    input_file using ($1+timezone_offset):4 with lines title "Handicap" axis x1y2

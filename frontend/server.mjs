@@ -91,33 +91,56 @@ const main = async () => {
                 <html>
                     <head>
                         <style>
+                            /* Reset padding and margin for the body */
                             body {
+                                margin: 0;
+                                padding: 0;
+                                display: flex;
+                                justify-content: center; /* Center horizontally */
+                                align-items: center;     /* Center vertically */
+                                height: 100vh;           /* Ensure full viewport height */
+                            }
+
+                            /* Define the grid container with full height and no gap */
+                            .grid-container {
                                 display: grid;
-                                grid-template-columns: repeat(2, 1fr); /* Two equal-width columns */
-                                gap: 16px; /* Spacing between items */
-                                width: 100%;
-                                margin: 0 auto; /* Center the container */
-                                height: 100vh; /* Full viewport height */
-                                align-items: center; /* Vertical alignment */
+                                grid-template-columns: repeat(2, 1fr);
+                                grid-template-rows: repeat(3, 1fr);
+                                height: 100vh; /* Use the full viewport height */
+                                width: 100vw;  /* Use the full viewport width */
+                                gap: 0;        /* No gaps in grid */
                             }
-            
-                            div {
-                                padding: 16px;
-                                display: flex; /* Using Flexbox */
-                                flex-direction: column; /* Stack content vertically */
-                                justify-content: center; /* Center content vertically */
-                                align-items: center; /* Center content horizontally */
-                                height: 100%; /* Full height */
+
+                            /* Style each square with no gap */
+                            .grid-item {
+                                background-color: lightgray; /* Basic color */
+                                border: 1px solid black; /* Optional border to ensure clean separation */
+                                display: flex;
+                                justify-content: center; /* Center content horizontally */
+                                align-items: center;     /* Center content vertically */
                             }
-            
-                            img {
-                                max-width: 100%; /* Images fit within their div */
-                                height: auto;
+
+                            .display-none {
+                                display: none;
+                            }
+
+                            .position-relative {
+                                position: relative;
+                            }
+
+                            .max-width-100p {
+                                max-width: 100%;
+                            }
+
+                            .max-height-100p {
+                                max-height: 100%;
                             }
                         </style>
                     </head>
                     <body>
-                        ${outcomeIds.map(outcomeId => `<div>${`${outcomesMap[outcomeId].market.description} - ${outcomesMap[outcomeId].outcome.description}`}<br><img src="../../generated/${eventId}-${outcomeId}.png"></div>`).join('\n')}
+                        <div class="grid-container">
+                            ${outcomeIds.map(outcomeId => `<div class="grid-item">${`${outcomesMap[outcomeId].market.description} - ${outcomesMap[outcomeId].outcome.description}`}<br><img src="../../generated/${eventId}-${outcomeId}.png"></div>`).join('\n')}
+                        </div>
                 
                         <script type="text/javascript">
                             setTimeout(() => {
